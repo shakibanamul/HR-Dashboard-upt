@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Search, Filter, Eye, Edit, Trash2, Video, Calendar, Clock, Users, MapPin, Phone, Mail, Star, CheckCircle, AlertCircle, X, Save, ExternalLink } from 'lucide-react';
+import { Plus, Search, Filter, Eye, Edit, Trash2, Video, Calendar, Clock, Users, MapPin, Phone, Mail, Star, CheckCircle, AlertCircle, X, Save, ExternalLink, Link } from 'lucide-react';
 import { mockRecruitmentData } from '../../data/mockData';
 
 interface Position {
@@ -23,12 +23,13 @@ interface Interview {
   positionId: string;
   candidateName: string;
   candidateEmail: string;
-  interviewType: 'zoom' | 'in-person' | 'phone';
+  interviewType: 'zoom' | 'meet' | 'teams' | 'in-person' | 'phone';
   scheduledDate: string;
   scheduledTime: string;
   status: 'scheduled' | 'completed' | 'cancelled' | 'rescheduled';
   interviewers: string[];
   meetingLink?: string;
+  customMeetingLink?: string;
   notes?: string;
   rating?: number;
 }
@@ -51,7 +52,38 @@ const Recruitment: React.FC = () => {
       requirements: ['Bachelor\'s degree', '3+ years experience', 'Strong communication skills'],
       postedDate: '2024-01-15',
       deadline: '2024-02-15'
-    }))
+    })),
+    // Add some rejected positions for demonstration
+    {
+      id: '5',
+      position: 'Junior Developer',
+      department: 'Engineering',
+      applicants: 12,
+      stage: 'rejected' as const,
+      priority: 'low' as const,
+      location: 'Remote',
+      salary: '$45,000 - $55,000',
+      type: 'full-time' as const,
+      description: 'Entry-level position for new graduates.',
+      requirements: ['Computer Science degree', 'Basic programming knowledge'],
+      postedDate: '2024-01-01',
+      deadline: '2024-01-30'
+    },
+    {
+      id: '6',
+      position: 'Sales Intern',
+      department: 'Sales',
+      applicants: 8,
+      stage: 'rejected' as const,
+      priority: 'low' as const,
+      location: 'New York, NY',
+      salary: '$30,000 - $35,000',
+      type: 'part-time' as const,
+      description: 'Internship position in sales department.',
+      requirements: ['Business or Marketing major', 'Communication skills'],
+      postedDate: '2023-12-15',
+      deadline: '2024-01-15'
+    }
   ]);
 
   const [interviews, setInterviews] = useState<Interview[]>([
@@ -65,7 +97,7 @@ const Recruitment: React.FC = () => {
       scheduledTime: '14:00',
       status: 'scheduled',
       interviewers: ['John Doe', 'Jane Smith'],
-      meetingLink: 'https://zoom.us/j/123456789',
+      customMeetingLink: 'https://zoom.us/j/123456789?pwd=abc123',
       rating: 4
     },
     {
@@ -73,11 +105,12 @@ const Recruitment: React.FC = () => {
       positionId: '2',
       candidateName: 'Michael Chen',
       candidateEmail: 'michael.c@email.com',
-      interviewType: 'in-person',
+      interviewType: 'meet',
       scheduledDate: '2024-01-22',
       scheduledTime: '10:30',
       status: 'scheduled',
       interviewers: ['Alice Brown'],
+      customMeetingLink: 'https://meet.google.com/abc-defg-hij',
       notes: 'Technical interview for Product Manager role'
     },
     {
@@ -85,12 +118,12 @@ const Recruitment: React.FC = () => {
       positionId: '1',
       candidateName: 'Emily Davis',
       candidateEmail: 'emily.d@email.com',
-      interviewType: 'zoom',
+      interviewType: 'teams',
       scheduledDate: '2024-01-18',
       scheduledTime: '16:00',
       status: 'completed',
       interviewers: ['John Doe'],
-      meetingLink: 'https://zoom.us/j/987654321',
+      customMeetingLink: 'https://teams.microsoft.com/l/meetup-join/19%3ameeting_abc123',
       rating: 5,
       notes: 'Excellent candidate, strong technical skills'
     }
@@ -115,7 +148,8 @@ const Recruitment: React.FC = () => {
     scheduledDate: '',
     scheduledTime: '',
     interviewers: '',
-    notes: ''
+    notes: '',
+    customMeetingLink: ''
   });
 
   const stages = ['applied', 'screening', 'interview', 'hired', 'rejected'];
@@ -137,6 +171,8 @@ const Recruitment: React.FC = () => {
 
   const interviewTypeIcons = {
     zoom: <Video className="h-4 w-4" />,
+    meet: <Video className="h-4 w-4" />,
+    teams: <Video className="h-4 w-4" />,
     'in-person': <MapPin className="h-4 w-4" />,
     phone: <Phone className="h-4 w-4" />
   };
@@ -197,23 +233,18 @@ const Recruitment: React.FC = () => {
       positionId: selectedPosition || '',
       candidateName: interviewForm.candidateName,
       candidateEmail: interviewForm.candidateEmail,
-      interviewType: interviewForm.interviewType as 'zoom' | 'in-person' | 'phone',
+      interviewType: interviewForm.interviewType as 'zoom' | 'meet' | 'teams' | 'in-person' | 'phone',
       scheduledDate: interviewForm.scheduledDate,
       scheduledTime: interviewForm.scheduledTime,
       status: 'scheduled',
       interviewers: interviewForm.interviewers.split(',').map(name => name.trim()),
       notes: interviewForm.notes,
-      meetingLink: interviewForm.interviewType === 'zoom' ? generateZoomLink() : undefined
+      customMeetingLink: interviewForm.customMeetingLink || undefined
     };
 
     setInterviews([...interviews, newInterview]);
     setShowInterviewModal(false);
     resetInterviewForm();
-  };
-
-  const generateZoomLink = () => {
-    const meetingId = Math.floor(Math.random() * 1000000000);
-    return `https://zoom.us/j/${meetingId}`;
   };
 
   const resetForm = () => {
@@ -238,7 +269,8 @@ const Recruitment: React.FC = () => {
       scheduledDate: '',
       scheduledTime: '',
       interviewers: '',
-      notes: ''
+      notes: '',
+      customMeetingLink: ''
     });
   };
 
@@ -263,6 +295,16 @@ const Recruitment: React.FC = () => {
         size={14}
         className={`${i < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
       />
+    ));
+  };
+
+  const getStageDisplayName = (stage: string) => {
+    return stage.charAt(0).toUpperCase() + stage.slice(1);
+  };
+
+  const movePosition = (positionId: string, newStage: 'applied' | 'screening' | 'interview' | 'hired' | 'rejected') => {
+    setPositions(positions.map(pos => 
+      pos.id === positionId ? { ...pos, stage: newStage } : pos
     ));
   };
 
@@ -301,7 +343,7 @@ const Recruitment: React.FC = () => {
                className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 text-center hover:shadow-md transition-shadow cursor-pointer"
                onClick={() => setFilterStage(stage)}>
             <div className="text-2xl font-bold text-gray-900">{count}</div>
-            <div className="text-xs sm:text-sm text-gray-600 capitalize">{stage}</div>
+            <div className="text-xs sm:text-sm text-gray-600 capitalize">{getStageDisplayName(stage)}</div>
             <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
               <div 
                 className="bg-blue-500 h-2 rounded-full transition-all duration-300"
@@ -330,9 +372,9 @@ const Recruitment: React.FC = () => {
                   {interviewTypeIcons[interview.interviewType]}
                   <span className="capitalize">{interview.interviewType}</span>
                 </div>
-                {interview.meetingLink && (
+                {interview.customMeetingLink && (
                   <button
-                    onClick={() => joinMeeting(interview.meetingLink!)}
+                    onClick={() => joinMeeting(interview.customMeetingLink!)}
                     className="w-full bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors flex items-center justify-center space-x-1"
                   >
                     <Video size={14} />
@@ -370,7 +412,7 @@ const Recruitment: React.FC = () => {
                 <option value="all">All Stages</option>
                 {stages.map(stage => (
                   <option key={stage} value={stage}>
-                    {stage.charAt(0).toUpperCase() + stage.slice(1)}
+                    {getStageDisplayName(stage)}
                   </option>
                 ))}
               </select>
@@ -398,7 +440,7 @@ const Recruitment: React.FC = () => {
             {stages.map(stage => (
               <div key={stage} className="bg-gray-50 rounded-lg p-4 min-w-[280px]">
                 <div className="flex items-center justify-between mb-4">
-                  <h4 className="font-medium text-gray-900 capitalize">{stage}</h4>
+                  <h4 className="font-medium text-gray-900 capitalize">{getStageDisplayName(stage)}</h4>
                   <span className="text-sm text-gray-500">
                     {filteredPositions.filter(pos => pos.stage === stage).length}
                   </span>
@@ -447,6 +489,26 @@ const Recruitment: React.FC = () => {
                             </button>
                           </div>
                         </div>
+                        
+                        {/* Stage Movement Buttons */}
+                        <div className="mt-3 pt-2 border-t border-gray-100">
+                          <div className="flex flex-wrap gap-1">
+                            {stages.filter(s => s !== position.stage).map(targetStage => (
+                              <button
+                                key={targetStage}
+                                onClick={() => movePosition(position.id, targetStage as any)}
+                                className={`px-2 py-1 text-xs rounded-full border transition-colors ${
+                                  targetStage === 'hired' ? 'border-green-300 text-green-700 hover:bg-green-50' :
+                                  targetStage === 'rejected' ? 'border-red-300 text-red-700 hover:bg-red-50' :
+                                  'border-gray-300 text-gray-700 hover:bg-gray-50'
+                                }`}
+                                title={`Move to ${getStageDisplayName(targetStage)}`}
+                              >
+                                {getStageDisplayName(targetStage)}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
                       </div>
                     ))}
                 </div>
@@ -490,7 +552,7 @@ const Recruitment: React.FC = () => {
                     <td className="p-3 sm:p-4 text-gray-900">{position.applicants}</td>
                     <td className="p-3 sm:p-4">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${stageColors[position.stage]}`}>
-                        {position.stage}
+                        {getStageDisplayName(position.stage)}
                       </span>
                     </td>
                     <td className="p-3 sm:p-4 hidden md:table-cell">
@@ -575,6 +637,12 @@ const Recruitment: React.FC = () => {
                         <Users size={14} />
                         <span>{interview.interviewers.join(', ')}</span>
                       </div>
+                      {interview.customMeetingLink && (
+                        <div className="flex items-center space-x-2">
+                          <Link size={14} />
+                          <span className="text-blue-600 truncate">Meeting link available</span>
+                        </div>
+                      )}
                     </div>
 
                     {interview.rating && (
@@ -585,9 +653,9 @@ const Recruitment: React.FC = () => {
                     )}
 
                     <div className="flex items-center space-x-2">
-                      {interview.meetingLink && (
+                      {interview.customMeetingLink && (
                         <button
-                          onClick={() => joinMeeting(interview.meetingLink!)}
+                          onClick={() => joinMeeting(interview.customMeetingLink!)}
                           className="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700 transition-colors flex items-center justify-center space-x-1"
                         >
                           <Video size={14} />
@@ -616,6 +684,9 @@ const Recruitment: React.FC = () => {
                       <div>
                         <div className="font-medium text-gray-900">{interview.candidateName}</div>
                         <div className="text-sm text-gray-600">{position?.position}</div>
+                        {interview.customMeetingLink && (
+                          <div className="text-xs text-blue-600">Custom meeting link used</div>
+                        )}
                       </div>
                       {interview.rating && (
                         <div className="flex items-center space-x-1">
@@ -658,6 +729,10 @@ const Recruitment: React.FC = () => {
               <span className="text-gray-600">Hires:</span>
               <span className="font-medium">{positions.filter(p => p.stage === 'hired').length}</span>
             </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Rejections:</span>
+              <span className="font-medium text-red-600">{positions.filter(p => p.stage === 'rejected').length}</span>
+            </div>
           </div>
         </div>
 
@@ -680,6 +755,12 @@ const Recruitment: React.FC = () => {
               <span className="text-gray-600">Interview Rating:</span>
               <span className="font-medium">4.2/5</span>
             </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Rejection Rate:</span>
+              <span className="font-medium text-red-600">
+                {Math.round((positions.filter(p => p.stage === 'rejected').length / positions.length) * 100)}%
+              </span>
+            </div>
           </div>
         </div>
 
@@ -695,6 +776,9 @@ const Recruitment: React.FC = () => {
                 <div className="flex items-center space-x-1 mt-1">
                   {interviewTypeIcons[interview.interviewType]}
                   <span className="text-xs text-blue-600 capitalize">{interview.interviewType}</span>
+                  {interview.customMeetingLink && (
+                    <span className="text-xs text-blue-500">• Custom link</span>
+                  )}
                 </div>
               </div>
             ))}
@@ -929,6 +1013,8 @@ const Recruitment: React.FC = () => {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                       <option value="zoom">Zoom Meeting</option>
+                      <option value="meet">Google Meet</option>
+                      <option value="teams">Microsoft Teams</option>
                       <option value="in-person">In-Person</option>
                       <option value="phone">Phone Call</option>
                     </select>
@@ -974,6 +1060,33 @@ const Recruitment: React.FC = () => {
                     />
                   </div>
 
+                  {/* Custom Meeting Link Field */}
+                  {['zoom', 'meet', 'teams'].includes(interviewForm.interviewType) && (
+                    <div className="sm:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Meeting Link *
+                      </label>
+                      <div className="relative">
+                        <Link className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                        <input
+                          type="url"
+                          required
+                          value={interviewForm.customMeetingLink}
+                          onChange={(e) => setInterviewForm({...interviewForm, customMeetingLink: e.target.value})}
+                          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder={
+                            interviewForm.interviewType === 'zoom' ? 'https://zoom.us/j/123456789?pwd=...' :
+                            interviewForm.interviewType === 'meet' ? 'https://meet.google.com/abc-defg-hij' :
+                            'https://teams.microsoft.com/l/meetup-join/...'
+                          }
+                        />
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Enter the complete meeting link including password if required
+                      </p>
+                    </div>
+                  )}
+
                   <div className="sm:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Notes
@@ -988,14 +1101,17 @@ const Recruitment: React.FC = () => {
                   </div>
                 </div>
 
-                {interviewForm.interviewType === 'zoom' && (
+                {['zoom', 'meet', 'teams'].includes(interviewForm.interviewType) && (
                   <div className="bg-blue-50 p-4 rounded-lg">
                     <div className="flex items-center space-x-2 mb-2">
                       <Video className="h-5 w-5 text-blue-600" />
-                      <span className="font-medium text-blue-900">Zoom Meeting</span>
+                      <span className="font-medium text-blue-900 capitalize">
+                        {interviewForm.interviewType === 'meet' ? 'Google Meet' : 
+                         interviewForm.interviewType === 'teams' ? 'Microsoft Teams' : 'Zoom'} Meeting
+                      </span>
                     </div>
                     <p className="text-sm text-blue-700">
-                      A Zoom meeting link will be automatically generated and sent to the candidate.
+                      Please provide the complete meeting link. The candidate will receive this link to join the interview.
                     </p>
                   </div>
                 )}
