@@ -108,7 +108,7 @@ export const mockEmployees: Employee[] = [
     joinDate: '2021-05-18',
     status: 'active',
     avatar: 'https://images.pexels.com/photos/1181424/pexels-photo-1181424.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=1'
-  }
+  },
   {
     id: '6',
     name: 'James Anderson',
