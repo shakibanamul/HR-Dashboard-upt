@@ -55,7 +55,7 @@ const Overview: React.FC = () => {
 
   // Calculate trends (mock calculation for demonstration)
   const calculateTrend = (current: number, previous: number) => ({
-    value: Math.round(((current - previous) / previous) * 100),
+    value: previous > 0 ? Math.round(((current - previous) / previous) * 100) : 0,
     isPositive: current > previous
   });
 
@@ -260,7 +260,11 @@ const Overview: React.FC = () => {
               <p className="text-sm font-medium text-gray-900">
                 {mockEmployees.filter(emp => new Date(emp.joinDate) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)).length} new employees joined this month
               </p>
-              <p className="text-xs text-gray-500">Latest: {mockEmployees.sort((a, b) => new Date(b.joinDate).getTime() - new Date(a.joinDate).getTime())[0]?.name}</p>
+              <p className="text-xs text-gray-500">
+                Latest: {mockEmployees
+                  .filter(emp => new Date(emp.joinDate) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000))
+                  .sort((a, b) => new Date(b.joinDate).getTime() - new Date(a.joinDate).getTime())[0]?.name || 'None this month'}
+              </p>
             </div>
             <div className="text-xs text-gray-400 whitespace-nowrap">Today</div>
           </div>

@@ -181,6 +181,11 @@ const Payroll: React.FC = () => {
 
   // Generate and download reports
   const generateReport = (type: 'excel' | 'tax' | 'benefits') => {
+    if (filteredRecords.length === 0) {
+      alert('No data available to generate report');
+      return;
+    }
+
     let content = '';
     let filename = '';
     
@@ -193,15 +198,15 @@ const Payroll: React.FC = () => {
           ...filteredRecords.map(record => {
             const employee = mockEmployees.find(emp => emp.id === record.employeeId);
             return [
-              employee?.name || '',
-              employee?.department || '',
+              `"${employee?.name || ''}"`,
+              `"${employee?.department || ''}"`,
               record.baseSalary,
               record.overtime,
               record.bonus,
               record.taxes,
               record.deductions,
               record.netPay,
-              record.status
+              `"${record.status}"`
             ].join(',');
           })
         ].join('\n');
@@ -289,6 +294,9 @@ const Payroll: React.FC = () => {
       alert('Please select employees to process payroll');
       return;
     }
+    
+    const confirmProcess = window.confirm(`Are you sure you want to process payroll for ${selectedEmployees.length} employees?`);
+    if (!confirmProcess) return;
     
     // Simulate payroll processing
     setTimeout(() => {

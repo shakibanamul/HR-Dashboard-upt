@@ -51,11 +51,13 @@ function App() {
           <div className="flex items-center justify-between">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="text-gray-600 hover:text-gray-900"
+              className="text-gray-600 hover:text-gray-900 p-1 rounded-lg hover:bg-gray-100 transition-colors"
             >
               <Menu size={24} />
             </button>
-            <h1 className="text-lg font-semibold text-gray-900">HR Dashboard</h1>
+            <h1 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
+              {activeSection.charAt(0).toUpperCase() + activeSection.slice(1)}
+            </h1>
             <div className="w-6"></div> {/* Spacer for centering */}
           </div>
         </div>

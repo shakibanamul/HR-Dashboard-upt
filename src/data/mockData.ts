@@ -109,6 +109,71 @@ export const mockEmployees: Employee[] = [
     status: 'active',
     avatar: 'https://images.pexels.com/photos/1181424/pexels-photo-1181424.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=1'
   }
+  {
+    id: '6',
+    name: 'James Anderson',
+    email: 'james.anderson@company.com',
+    department: 'Operations',
+    role: 'Operations Manager',
+    salary: 78000,
+    performanceRating: 4.3,
+    attendanceRate: 94,
+    joinDate: '2022-07-12',
+    status: 'active',
+    avatar: 'https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=1'
+  },
+  {
+    id: '7',
+    name: 'Maria Garcia',
+    email: 'maria.garcia@company.com',
+    department: 'Product',
+    role: 'Product Designer',
+    salary: 71000,
+    performanceRating: 4.7,
+    attendanceRate: 97,
+    joinDate: '2023-02-28',
+    status: 'active',
+    avatar: 'https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=1'
+  },
+  {
+    id: '8',
+    name: 'Robert Kim',
+    email: 'robert.kim@company.com',
+    department: 'Engineering',
+    role: 'Backend Developer',
+    salary: 82000,
+    performanceRating: 4.4,
+    attendanceRate: 91,
+    joinDate: '2021-11-15',
+    status: 'active',
+    avatar: 'https://images.pexels.com/photos/1040880/pexels-photo-1040880.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=1'
+  },
+  {
+    id: '9',
+    name: 'Jennifer Lee',
+    email: 'jennifer.lee@company.com',
+    department: 'Marketing',
+    role: 'Content Specialist',
+    salary: 55000,
+    performanceRating: 4.1,
+    attendanceRate: 93,
+    joinDate: '2023-04-03',
+    status: 'active',
+    avatar: 'https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=1'
+  },
+  {
+    id: '10',
+    name: 'Alex Turner',
+    email: 'alex.turner@company.com',
+    department: 'Sales',
+    role: 'Sales Manager',
+    salary: 75000,
+    performanceRating: 4.0,
+    attendanceRate: 89,
+    joinDate: '2022-01-20',
+    status: 'active',
+    avatar: 'https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=1'
+  }
 ];
 
 export const mockPerformanceData: PerformanceData[] = [

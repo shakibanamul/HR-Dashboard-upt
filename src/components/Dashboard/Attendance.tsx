@@ -81,8 +81,15 @@ const Attendance: React.FC = () => {
   };
 
   const handleDateClick = (day: number) => {
-    const dateStr = `${calendarView.getFullYear()}-${String(calendarView.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const clickedDate = new Date(calendarView.getFullYear(), calendarView.getMonth(), day);
+    const dateStr = clickedDate.toISOString().split('T')[0];
     setSelectedDate(dateStr);
+    
+    // Show attendance details for selected date
+    const attendanceForDate = mockAttendanceData.find(data => data.date === dateStr);
+    if (attendanceForDate) {
+      alert(`Attendance for ${clickedDate.toLocaleDateString()}:\nPresent: ${attendanceForDate.present}\nAbsent: ${attendanceForDate.absent}\nLate: ${attendanceForDate.late}`);
+    }
   };
 
   const handleEmployeeClick = (employeeId: string) => {
@@ -112,6 +119,9 @@ const Attendance: React.FC = () => {
     if (rate >= 75) return 'Fair';
     return 'Poor';
   };
+
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
 
   return (
     <div className="space-y-4 sm:space-y-6">

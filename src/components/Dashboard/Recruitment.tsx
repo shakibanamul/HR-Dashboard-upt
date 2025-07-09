@@ -1,311 +1,409 @@
 import React, { useState } from 'react';
-import { Plus, Search, Filter, Eye, Edit, Trash2, Video, Calendar, Clock, Users, MapPin, Phone, Mail, Star, CheckCircle, AlertCircle, X, Save, ExternalLink, Link } from 'lucide-react';
-import { mockRecruitmentData } from '../../data/mockData';
+import { Plus, Search, Filter, Calendar, Users, Clock, MapPin, Video, Phone, Mail, Edit, Trash2, Eye, CheckCircle, X, Save, ExternalLink } from 'lucide-react';
 
 interface Position {
   id: string;
-  position: string;
+  title: string;
   department: string;
-  applicants: number;
-  stage: 'applied' | 'screening' | 'interview' | 'hired' | 'rejected';
-  priority: 'high' | 'medium' | 'low';
   location: string;
+  type: 'full-time' | 'part-time' | 'contract' | 'internship';
   salary: string;
-  type: 'full-time' | 'part-time' | 'contract';
   description: string;
   requirements: string[];
-  postedDate: string;
+  status: 'open' | 'closed' | 'on-hold';
+  applicants: number;
+  posted: string;
   deadline: string;
+  priority: 'high' | 'medium' | 'low';
+}
+
+interface Candidate {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  position: string;
+  stage: 'applied' | 'screening' | 'interview' | 'offer' | 'hired' | 'rejected';
+  score: number;
+  appliedDate: string;
+  resume: string;
+  notes: string;
+  avatar: string;
 }
 
 interface Interview {
   id: string;
-  positionId: string;
+  candidateId: string;
   candidateName: string;
-  candidateEmail: string;
-  interviewType: 'zoom' | 'meet' | 'teams' | 'in-person' | 'phone';
-  scheduledDate: string;
-  scheduledTime: string;
-  status: 'scheduled' | 'completed' | 'cancelled' | 'rescheduled';
-  interviewers: string[];
+  position: string;
+  date: string;
+  time: string;
+  type: 'phone' | 'video' | 'in-person';
+  interviewer: string;
+  location?: string;
   meetingLink?: string;
-  customMeetingLink?: string;
+  status: 'scheduled' | 'completed' | 'cancelled' | 'rescheduled';
   notes?: string;
-  rating?: number;
 }
 
 const Recruitment: React.FC = () => {
+  const [activeTab, setActiveTab] = useState('positions');
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStage, setFilterStage] = useState('all');
   const [filterDepartment, setFilterDepartment] = useState('all');
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [showPositionModal, setShowPositionModal] = useState(false);
   const [showInterviewModal, setShowInterviewModal] = useState(false);
-  const [selectedPosition, setSelectedPosition] = useState<string | null>(null);
-  const [viewType, setViewType] = useState('kanban');
+  const [editingPosition, setEditingPosition] = useState<Position | null>(null);
+  const [selectedCandidate, setSelectedCandidate] = useState<string | null>(null);
+  const [showCandidateModal, setShowCandidateModal] = useState(false);
+  const [selectedCandidateDetails, setSelectedCandidateDetails] = useState<Candidate | null>(null);
+
+  // Mock data
   const [positions, setPositions] = useState<Position[]>([
-    ...mockRecruitmentData.map(pos => ({
-      ...pos,
-      location: 'New York, NY',
-      salary: '$60,000 - $80,000',
-      type: 'full-time' as const,
-      description: 'We are looking for a talented professional to join our team.',
-      requirements: ['Bachelor\'s degree', '3+ years experience', 'Strong communication skills'],
-      postedDate: '2024-01-15',
-      deadline: '2024-02-15'
-    })),
-    // Add some rejected positions for demonstration
     {
-      id: '5',
-      position: 'Junior Developer',
+      id: '1',
+      title: 'Senior Frontend Developer',
       department: 'Engineering',
-      applicants: 12,
-      stage: 'rejected' as const,
-      priority: 'low' as const,
-      location: 'Remote',
-      salary: '$45,000 - $55,000',
-      type: 'full-time' as const,
-      description: 'Entry-level position for new graduates.',
-      requirements: ['Computer Science degree', 'Basic programming knowledge'],
-      postedDate: '2024-01-01',
-      deadline: '2024-01-30'
+      location: 'San Francisco, CA',
+      type: 'full-time',
+      salary: '$120,000 - $150,000',
+      description: 'We are looking for a Senior Frontend Developer to join our engineering team.',
+      requirements: ['5+ years React experience', 'TypeScript proficiency', 'Team leadership skills'],
+      status: 'open',
+      applicants: 24,
+      posted: '2024-01-15',
+      deadline: '2024-02-15',
+      priority: 'high'
     },
     {
-      id: '6',
-      position: 'Sales Intern',
-      department: 'Sales',
-      applicants: 8,
-      stage: 'rejected' as const,
-      priority: 'low' as const,
+      id: '2',
+      title: 'Product Manager',
+      department: 'Product',
       location: 'New York, NY',
-      salary: '$30,000 - $35,000',
-      type: 'part-time' as const,
-      description: 'Internship position in sales department.',
-      requirements: ['Business or Marketing major', 'Communication skills'],
-      postedDate: '2023-12-15',
-      deadline: '2024-01-15'
+      type: 'full-time',
+      salary: '$130,000 - $160,000',
+      description: 'Seeking an experienced Product Manager to drive product strategy.',
+      requirements: ['3+ years PM experience', 'Agile methodology', 'Data-driven mindset'],
+      status: 'open',
+      applicants: 18,
+      posted: '2024-01-20',
+      deadline: '2024-02-20',
+      priority: 'high'
+    },
+    {
+      id: '3',
+      title: 'Marketing Specialist',
+      department: 'Marketing',
+      location: 'Remote',
+      type: 'full-time',
+      salary: '$60,000 - $80,000',
+      description: 'Join our marketing team to create compelling campaigns.',
+      requirements: ['2+ years marketing experience', 'Social media expertise', 'Content creation'],
+      status: 'open',
+      applicants: 32,
+      posted: '2024-01-10',
+      deadline: '2024-02-10',
+      priority: 'medium'
+    }
+  ]);
+
+  const [candidates, setCandidates] = useState<Candidate[]>([
+    {
+      id: '1',
+      name: 'John Smith',
+      email: 'john.smith@email.com',
+      phone: '+1 (555) 123-4567',
+      position: 'Senior Frontend Developer',
+      stage: 'interview',
+      score: 85,
+      appliedDate: '2024-01-16',
+      resume: 'john-smith-resume.pdf',
+      notes: 'Strong technical background, good communication skills',
+      avatar: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=1'
+    },
+    {
+      id: '2',
+      name: 'Sarah Johnson',
+      email: 'sarah.johnson@email.com',
+      phone: '+1 (555) 234-5678',
+      position: 'Product Manager',
+      stage: 'screening',
+      score: 78,
+      appliedDate: '2024-01-21',
+      resume: 'sarah-johnson-resume.pdf',
+      notes: 'Great product sense, needs technical depth',
+      avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=1'
+    },
+    {
+      id: '3',
+      name: 'Mike Chen',
+      email: 'mike.chen@email.com',
+      phone: '+1 (555) 345-6789',
+      position: 'Marketing Specialist',
+      stage: 'applied',
+      score: 72,
+      appliedDate: '2024-01-11',
+      resume: 'mike-chen-resume.pdf',
+      notes: 'Creative portfolio, limited experience',
+      avatar: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=1'
+    },
+    {
+      id: '4',
+      name: 'Emily Davis',
+      email: 'emily.davis@email.com',
+      phone: '+1 (555) 456-7890',
+      position: 'Senior Frontend Developer',
+      stage: 'rejected',
+      score: 45,
+      appliedDate: '2024-01-17',
+      resume: 'emily-davis-resume.pdf',
+      notes: 'Insufficient experience for senior role',
+      avatar: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=1'
+    },
+    {
+      id: '5',
+      name: 'David Wilson',
+      email: 'david.wilson@email.com',
+      phone: '+1 (555) 567-8901',
+      position: 'Product Manager',
+      stage: 'hired',
+      score: 92,
+      appliedDate: '2024-01-22',
+      resume: 'david-wilson-resume.pdf',
+      notes: 'Excellent candidate, strong hire',
+      avatar: 'https://images.pexels.com/photos/1181424/pexels-photo-1181424.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=1'
     }
   ]);
 
   const [interviews, setInterviews] = useState<Interview[]>([
     {
       id: '1',
-      positionId: '1',
-      candidateName: 'Sarah Johnson',
-      candidateEmail: 'sarah.j@email.com',
-      interviewType: 'zoom',
-      scheduledDate: '2024-01-20',
-      scheduledTime: '14:00',
+      candidateId: '1',
+      candidateName: 'John Smith',
+      position: 'Senior Frontend Developer',
+      date: '2024-01-25',
+      time: '14:00',
+      type: 'video',
+      interviewer: 'Sarah Johnson',
+      meetingLink: 'https://zoom.us/j/123456789',
       status: 'scheduled',
-      interviewers: ['John Doe', 'Jane Smith'],
-      customMeetingLink: 'https://zoom.us/j/123456789?pwd=abc123',
-      rating: 4
+      notes: 'Technical interview - React and TypeScript focus'
     },
     {
       id: '2',
-      positionId: '2',
-      candidateName: 'Michael Chen',
-      candidateEmail: 'michael.c@email.com',
-      interviewType: 'meet',
-      scheduledDate: '2024-01-22',
-      scheduledTime: '10:30',
+      candidateId: '2',
+      candidateName: 'Sarah Johnson',
+      position: 'Product Manager',
+      date: '2024-01-26',
+      time: '10:00',
+      type: 'phone',
+      interviewer: 'Mike Chen',
       status: 'scheduled',
-      interviewers: ['Alice Brown'],
-      customMeetingLink: 'https://meet.google.com/abc-defg-hij',
-      notes: 'Technical interview for Product Manager role'
-    },
-    {
-      id: '3',
-      positionId: '1',
-      candidateName: 'Emily Davis',
-      candidateEmail: 'emily.d@email.com',
-      interviewType: 'teams',
-      scheduledDate: '2024-01-18',
-      scheduledTime: '16:00',
-      status: 'completed',
-      interviewers: ['John Doe'],
-      customMeetingLink: 'https://teams.microsoft.com/l/meetup-join/19%3ameeting_abc123',
-      rating: 5,
-      notes: 'Excellent candidate, strong technical skills'
+      notes: 'Initial screening call'
     }
   ]);
 
-  const [formData, setFormData] = useState({
-    position: '',
+  const [positionForm, setPositionForm] = useState({
+    title: '',
     department: '',
     location: '',
+    type: 'full-time' as const,
     salary: '',
-    type: 'full-time',
-    priority: 'medium',
     description: '',
     requirements: '',
-    deadline: ''
+    deadline: '',
+    priority: 'medium' as const
   });
 
   const [interviewForm, setInterviewForm] = useState({
-    candidateName: '',
-    candidateEmail: '',
-    interviewType: 'zoom',
-    scheduledDate: '',
-    scheduledTime: '',
-    interviewers: '',
-    notes: '',
-    customMeetingLink: ''
+    date: '',
+    time: '',
+    type: 'video' as const,
+    interviewer: '',
+    location: '',
+    meetingLink: '',
+    notes: ''
   });
 
-  const stages = ['applied', 'screening', 'interview', 'hired', 'rejected'];
-  const departments = ['Engineering', 'Marketing', 'Finance', 'Sales', 'HR', 'Operations', 'Product'];
-  
-  const stageColors = {
-    applied: 'bg-blue-100 text-blue-800 border-blue-200',
-    screening: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    interview: 'bg-purple-100 text-purple-800 border-purple-200',
-    hired: 'bg-green-100 text-green-800 border-green-200',
-    rejected: 'bg-red-100 text-red-800 border-red-200'
-  };
+  const departments = ['Engineering', 'Product', 'Marketing', 'Sales', 'HR', 'Finance', 'Operations'];
+  const interviewers = ['Sarah Johnson', 'Mike Chen', 'David Wilson', 'Emily Davis', 'John Smith'];
 
-  const priorityColors = {
-    high: 'bg-red-100 text-red-800 border-red-200',
-    medium: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    low: 'bg-green-100 text-green-800 border-green-200'
-  };
-
-  const interviewTypeIcons = {
-    zoom: <Video className="h-4 w-4" />,
-    meet: <Video className="h-4 w-4" />,
-    teams: <Video className="h-4 w-4" />,
-    'in-person': <MapPin className="h-4 w-4" />,
-    phone: <Phone className="h-4 w-4" />
-  };
-
-  const filteredPositions = positions.filter(position => 
-    position.position.toLowerCase().includes(searchTerm.toLowerCase()) &&
-    (filterStage === 'all' || position.stage === filterStage) &&
-    (filterDepartment === 'all' || position.department === filterDepartment)
+  // Filter functions
+  const filteredPositions = positions.filter(pos => 
+    pos.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    (filterDepartment === 'all' || pos.department === filterDepartment) &&
+    (filterStatus === 'all' || pos.status === filterStatus)
   );
 
-  const stageStats = stages.map(stage => ({
-    stage,
-    count: positions.filter(pos => pos.stage === stage).length
-  }));
-
-  const upcomingInterviews = interviews.filter(interview => 
-    interview.status === 'scheduled' && 
-    new Date(`${interview.scheduledDate}T${interview.scheduledTime}`) > new Date()
-  ).sort((a, b) => 
-    new Date(`${a.scheduledDate}T${a.scheduledTime}`).getTime() - 
-    new Date(`${b.scheduledDate}T${b.scheduledTime}`).getTime()
+  const filteredCandidates = candidates.filter(candidate => 
+    candidate.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    (filterDepartment === 'all' || positions.find(p => p.title === candidate.position)?.department === filterDepartment) &&
+    (filterStatus === 'all' || candidate.stage === filterStatus)
   );
 
-  const todayInterviews = interviews.filter(interview => 
-    interview.scheduledDate === new Date().toISOString().split('T')[0] &&
-    interview.status === 'scheduled'
-  );
+  // Form handlers
+  const resetPositionForm = () => {
+    setPositionForm({
+      title: '',
+      department: '',
+      location: '',
+      type: 'full-time',
+      salary: '',
+      description: '',
+      requirements: '',
+      deadline: '',
+      priority: 'medium'
+    });
+  };
 
-  const handleAddPosition = (e: React.FormEvent) => {
+  const handlePositionSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     const newPosition: Position = {
-      id: Date.now().toString(),
-      position: formData.position,
-      department: formData.department,
-      location: formData.location,
-      salary: formData.salary,
-      type: formData.type as 'full-time' | 'part-time' | 'contract',
-      priority: formData.priority as 'high' | 'medium' | 'low',
-      description: formData.description,
-      requirements: formData.requirements.split('\n').filter(req => req.trim()),
-      postedDate: new Date().toISOString().split('T')[0],
-      deadline: formData.deadline,
-      applicants: 0,
-      stage: 'applied'
+      id: editingPosition ? editingPosition.id : Date.now().toString(),
+      title: positionForm.title,
+      department: positionForm.department,
+      location: positionForm.location,
+      type: positionForm.type,
+      salary: positionForm.salary,
+      description: positionForm.description,
+      requirements: positionForm.requirements.split('\n').filter(req => req.trim()),
+      status: 'open',
+      applicants: editingPosition ? editingPosition.applicants : 0,
+      posted: editingPosition ? editingPosition.posted : new Date().toISOString().split('T')[0],
+      deadline: positionForm.deadline,
+      priority: positionForm.priority
     };
 
-    setPositions([...positions, newPosition]);
-    setShowAddModal(false);
-    resetForm();
+    if (editingPosition) {
+      setPositions(positions.map(pos => pos.id === editingPosition.id ? newPosition : pos));
+    } else {
+      setPositions([...positions, newPosition]);
+    }
+
+    setShowPositionModal(false);
+    resetPositionForm();
+    setEditingPosition(null);
   };
 
   const handleScheduleInterview = (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!selectedCandidate) return;
+
+    const candidate = candidates.find(c => c.id === selectedCandidate);
+    if (!candidate) return;
+
     const newInterview: Interview = {
       id: Date.now().toString(),
-      positionId: selectedPosition || '',
-      candidateName: interviewForm.candidateName,
-      candidateEmail: interviewForm.candidateEmail,
-      interviewType: interviewForm.interviewType as 'zoom' | 'meet' | 'teams' | 'in-person' | 'phone',
-      scheduledDate: interviewForm.scheduledDate,
-      scheduledTime: interviewForm.scheduledTime,
+      candidateId: selectedCandidate,
+      candidateName: candidate.name,
+      position: candidate.position,
+      date: interviewForm.date,
+      time: interviewForm.time,
+      type: interviewForm.type,
+      interviewer: interviewForm.interviewer,
+      location: interviewForm.location || undefined,
+      meetingLink: interviewForm.meetingLink || undefined,
       status: 'scheduled',
-      interviewers: interviewForm.interviewers.split(',').map(name => name.trim()),
-      notes: interviewForm.notes,
-      customMeetingLink: interviewForm.customMeetingLink || undefined
+      notes: interviewForm.notes || undefined
     };
 
     setInterviews([...interviews, newInterview]);
+    
+    // Update candidate stage to interview
+    setCandidates(candidates.map(c => 
+      c.id === selectedCandidate ? { ...c, stage: 'interview' } : c
+    ));
+
     setShowInterviewModal(false);
-    resetInterviewForm();
-  };
-
-  const resetForm = () => {
-    setFormData({
-      position: '',
-      department: '',
-      location: '',
-      salary: '',
-      type: 'full-time',
-      priority: 'medium',
-      description: '',
-      requirements: '',
-      deadline: ''
-    });
-  };
-
-  const resetInterviewForm = () => {
     setInterviewForm({
-      candidateName: '',
-      candidateEmail: '',
-      interviewType: 'zoom',
-      scheduledDate: '',
-      scheduledTime: '',
-      interviewers: '',
-      notes: '',
-      customMeetingLink: ''
+      date: '',
+      time: '',
+      type: 'video',
+      interviewer: '',
+      location: '',
+      meetingLink: '',
+      notes: ''
     });
+    setSelectedCandidate(null);
   };
 
-  const joinMeeting = (meetingLink: string) => {
-    window.open(meetingLink, '_blank');
+  const openPositionModal = (position?: Position) => {
+    if (position) {
+      setPositionForm({
+        title: position.title,
+        department: position.department,
+        location: position.location,
+        type: position.type,
+        salary: position.salary,
+        description: position.description,
+        requirements: position.requirements.join('\n'),
+        deadline: position.deadline,
+        priority: position.priority
+      });
+      setEditingPosition(position);
+    } else {
+      resetPositionForm();
+      setEditingPosition(null);
+    }
+    setShowPositionModal(true);
   };
 
-  const getInterviewStatusColor = (status: string) => {
-    switch (status) {
-      case 'scheduled': return 'bg-blue-100 text-blue-800';
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      case 'rescheduled': return 'bg-yellow-100 text-yellow-800';
+  const deletePosition = (id: string) => {
+    if (confirm('Are you sure you want to delete this position?')) {
+      setPositions(positions.filter(pos => pos.id !== id));
+    }
+  };
+
+  const updateCandidateStage = (candidateId: string, newStage: Candidate['stage']) => {
+    setCandidates(candidates.map(c => 
+      c.id === candidateId ? { ...c, stage: newStage } : c
+    ));
+  };
+
+  const getStageColor = (stage: string) => {
+    switch (stage) {
+      case 'applied': return 'bg-blue-100 text-blue-800';
+      case 'screening': return 'bg-yellow-100 text-yellow-800';
+      case 'interview': return 'bg-purple-100 text-purple-800';
+      case 'offer': return 'bg-orange-100 text-orange-800';
+      case 'hired': return 'bg-green-100 text-green-800';
+      case 'rejected': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getRatingStars = (rating: number) => {
-    return Array.from({ length: 5 }, (_, i) => (
-      <Star
-        key={i}
-        size={14}
-        className={`${i < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
-      />
-    ));
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'high': return 'bg-red-100 text-red-800';
+      case 'medium': return 'bg-yellow-100 text-yellow-800';
+      case 'low': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
   };
 
-  const getStageDisplayName = (stage: string) => {
-    return stage.charAt(0).toUpperCase() + stage.slice(1);
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'open': return 'bg-green-100 text-green-800';
+      case 'closed': return 'bg-red-100 text-red-800';
+      case 'on-hold': return 'bg-yellow-100 text-yellow-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
   };
 
-  const movePosition = (positionId: string, newStage: 'applied' | 'screening' | 'interview' | 'hired' | 'rejected') => {
-    setPositions(positions.map(pos => 
-      pos.id === positionId ? { ...pos, stage: newStage } : pos
-    ));
+  // Kanban board data
+  const kanbanStages = [
+    { id: 'applied', title: 'Applied', color: 'bg-blue-50 border-blue-200' },
+    { id: 'screening', title: 'Screening', color: 'bg-yellow-50 border-yellow-200' },
+    { id: 'interview', title: 'Interview', color: 'bg-purple-50 border-purple-200' },
+    { id: 'offer', title: 'Offer', color: 'bg-orange-50 border-orange-200' },
+    { id: 'hired', title: 'Hired', color: 'bg-green-50 border-green-200' },
+    { id: 'rejected', title: 'Rejected', color: 'bg-red-50 border-red-200' }
+  ];
+
+  const getCandidatesByStage = (stage: string) => {
+    return filteredCandidates.filter(candidate => candidate.stage === stage);
   };
 
   return (
@@ -313,507 +411,468 @@ const Recruitment: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between space-y-4 lg:space-y-0">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Recruitment Pipeline</h2>
-          <p className="text-sm text-gray-600 mt-1">Manage positions, candidates, and interviews</p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Recruitment Management</h2>
+          <p className="text-sm text-gray-600 mt-1">Manage job positions and candidate pipeline</p>
         </div>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 w-full lg:w-auto">
-          <select
-            value={viewType}
-            onChange={(e) => setViewType(e.target.value)}
-            className="w-full sm:w-auto border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-          >
-            <option value="kanban">Kanban View</option>
-            <option value="list">List View</option>
-            <option value="interviews">Interviews</option>
-          </select>
-          <button 
-            onClick={() => setShowAddModal(true)}
-            className="w-full sm:w-auto bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center justify-center space-x-2 hover:bg-blue-700 transition-colors"
-          >
-            <Plus size={20} />
-            <span>Add Position</span>
-          </button>
-        </div>
+        <button 
+          onClick={() => openPositionModal()}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 w-full lg:w-auto justify-center"
+        >
+          <Plus size={20} />
+          <span>Add Position</span>
+        </button>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-        {stageStats.map(({ stage, count }) => (
-          <div key={stage} 
-               className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 text-center hover:shadow-md transition-shadow cursor-pointer"
-               onClick={() => setFilterStage(stage)}>
-            <div className="text-2xl font-bold text-gray-900">{count}</div>
-            <div className="text-xs sm:text-sm text-gray-600 capitalize">{getStageDisplayName(stage)}</div>
-            <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${positions.length > 0 ? (count / positions.length) * 100 : 0}%` }}
-              ></div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Today's Interviews Alert */}
-      {todayInterviews.length > 0 && (
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-          <div className="flex items-center space-x-2 mb-2">
-            <Calendar className="h-5 w-5 text-blue-600" />
-            <h3 className="font-semibold text-blue-900">Today's Interviews ({todayInterviews.length})</h3>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {todayInterviews.map(interview => (
-              <div key={interview.id} className="bg-white p-3 rounded-lg border border-blue-200">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-medium text-gray-900">{interview.candidateName}</span>
-                  <span className="text-sm text-gray-600">{interview.scheduledTime}</span>
-                </div>
-                <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
-                  {interviewTypeIcons[interview.interviewType]}
-                  <span className="capitalize">{interview.interviewType}</span>
-                </div>
-                {interview.customMeetingLink && (
-                  <button
-                    onClick={() => joinMeeting(interview.customMeetingLink!)}
-                    className="w-full bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors flex items-center justify-center space-x-1"
-                  >
-                    <Video size={14} />
-                    <span>Join Meeting</span>
-                  </button>
-                )}
-              </div>
+      {/* Tabs */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div className="border-b border-gray-200">
+          <nav className="flex space-x-8 px-4 sm:px-6" aria-label="Tabs">
+            {[
+              { id: 'positions', label: 'Open Positions', count: positions.filter(p => p.status === 'open').length },
+              { id: 'candidates', label: 'Candidates', count: candidates.length },
+              { id: 'kanban', label: 'Pipeline', count: candidates.filter(c => c.stage !== 'rejected' && c.stage !== 'hired').length },
+              { id: 'interviews', label: 'Interviews', count: interviews.filter(i => i.status === 'scheduled').length }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+                  activeTab === tab.id
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                {tab.label}
+                <span className={`ml-2 py-0.5 px-2 rounded-full text-xs ${
+                  activeTab === tab.id ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600'
+                }`}>
+                  {tab.count}
+                </span>
+              </button>
             ))}
-          </div>
+          </nav>
         </div>
-      )}
 
-      {/* Search and Filter */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-        <div className="flex flex-col lg:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-            <input
-              type="text"
-              placeholder="Search positions..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-          
-          <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+        {/* Search and Filter */}
+        <div className="p-4 sm:p-6 border-b border-gray-200">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+              <input
+                type="text"
+                placeholder={`Search ${activeTab}...`}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            
             <div className="flex items-center space-x-2">
               <Filter size={20} className="text-gray-400" />
               <select
-                value={filterStage}
-                onChange={(e) => setFilterStage(e.target.value)}
+                value={filterDepartment}
+                onChange={(e) => setFilterDepartment(e.target.value)}
                 className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-0"
               >
-                <option value="all">All Stages</option>
-                {stages.map(stage => (
-                  <option key={stage} value={stage}>
-                    {getStageDisplayName(stage)}
-                  </option>
+                <option value="all">All Departments</option>
+                {departments.map(dept => (
+                  <option key={dept} value={dept}>{dept}</option>
                 ))}
               </select>
+              
+              {activeTab !== 'kanban' && (
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-0"
+                >
+                  <option value="all">All Status</option>
+                  {activeTab === 'positions' ? (
+                    <>
+                      <option value="open">Open</option>
+                      <option value="closed">Closed</option>
+                      <option value="on-hold">On Hold</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="applied">Applied</option>
+                      <option value="screening">Screening</option>
+                      <option value="interview">Interview</option>
+                      <option value="offer">Offer</option>
+                      <option value="hired">Hired</option>
+                      <option value="rejected">Rejected</option>
+                    </>
+                  )}
+                </select>
+              )}
             </div>
-            
-            <select
-              value={filterDepartment}
-              onChange={(e) => setFilterDepartment(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-0"
-            >
-              <option value="all">All Departments</option>
-              {departments.map(dept => (
-                <option key={dept} value={dept}>{dept}</option>
-              ))}
-            </select>
           </div>
         </div>
-      </div>
 
-      {/* Main Content */}
-      {viewType === 'kanban' && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Recruitment Kanban</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 overflow-x-auto">
-            {stages.map(stage => (
-              <div key={stage} className="bg-gray-50 rounded-lg p-4 min-w-[280px]">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="font-medium text-gray-900 capitalize">{getStageDisplayName(stage)}</h4>
-                  <span className="text-sm text-gray-500">
-                    {filteredPositions.filter(pos => pos.stage === stage).length}
-                  </span>
-                </div>
-                <div className="space-y-3 max-h-96 overflow-y-auto">
-                  {filteredPositions
-                    .filter(pos => pos.stage === stage)
-                    .map(position => (
-                      <div key={position.id} 
-                           className="bg-white rounded-lg p-4 shadow-sm border border-gray-200 cursor-pointer hover:shadow-md transition-shadow">
-                        <div className="flex items-start justify-between mb-3">
-                          <h5 className="font-medium text-gray-900 text-sm line-clamp-2 pr-2">{position.position}</h5>
-                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${priorityColors[position.priority]}`}>
-                            {position.priority}
+        {/* Tab Content */}
+        <div className="p-4 sm:p-6">
+          {/* Positions Tab */}
+          {activeTab === 'positions' && (
+            <div className="space-y-4">
+              {filteredPositions.map((position) => (
+                <div key={position.id} className="border border-gray-200 rounded-lg p-4 sm:p-6 hover:shadow-md transition-shadow">
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
+                    <div className="flex-1">
+                      <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 mb-2">
+                        <h3 className="text-lg font-semibold text-gray-900">{position.title}</h3>
+                        <div className="flex items-center space-x-2">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(position.status)}`}>
+                            {position.status.charAt(0).toUpperCase() + position.status.slice(1)}
+                          </span>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(position.priority)}`}>
+                            {position.priority.charAt(0).toUpperCase() + position.priority.slice(1)} Priority
                           </span>
                         </div>
-                        <div className="space-y-2 text-xs text-gray-600">
-                          <div className="flex items-center space-x-1">
-                            <MapPin size={12} />
-                            <span className="truncate">{position.department}</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <Users size={12} />
-                            <span>{position.applicants} applicants</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <Calendar size={12} />
-                            <span>Due: {new Date(position.deadline).toLocaleDateString()}</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-                          <span className="text-xs text-gray-500">{position.salary}</span>
-                          <div className="flex items-center space-x-1">
-                            <button 
-                              onClick={() => {
-                                setSelectedPosition(position.id);
-                                setShowInterviewModal(true);
-                              }}
-                              className="text-blue-600 hover:text-blue-800 p-1"
-                              title="Schedule Interview"
-                            >
-                              <Calendar size={14} />
-                            </button>
-                            <button className="text-gray-600 hover:text-gray-800 p-1" title="View Details">
-                              <Eye size={14} />
-                            </button>
-                          </div>
-                        </div>
-                        
-                        {/* Stage Movement Buttons */}
-                        <div className="mt-3 pt-2 border-t border-gray-100">
-                          <div className="flex flex-wrap gap-1">
-                            {stages.filter(s => s !== position.stage).map(targetStage => (
-                              <button
-                                key={targetStage}
-                                onClick={() => movePosition(position.id, targetStage as any)}
-                                className={`px-2 py-1 text-xs rounded-full border transition-colors ${
-                                  targetStage === 'hired' ? 'border-green-300 text-green-700 hover:bg-green-50' :
-                                  targetStage === 'rejected' ? 'border-red-300 text-red-700 hover:bg-red-50' :
-                                  'border-gray-300 text-gray-700 hover:bg-gray-50'
-                                }`}
-                                title={`Move to ${getStageDisplayName(targetStage)}`}
-                              >
-                                {getStageDisplayName(targetStage)}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
                       </div>
-                    ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {viewType === 'list' && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Position Details</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="text-left p-3 sm:p-4 font-medium text-gray-900 min-w-[200px]">Position</th>
-                  <th className="text-left p-3 sm:p-4 font-medium text-gray-900 hidden sm:table-cell">Department</th>
-                  <th className="text-left p-3 sm:p-4 font-medium text-gray-900">Applicants</th>
-                  <th className="text-left p-3 sm:p-4 font-medium text-gray-900">Stage</th>
-                  <th className="text-left p-3 sm:p-4 font-medium text-gray-900 hidden md:table-cell">Priority</th>
-                  <th className="text-left p-3 sm:p-4 font-medium text-gray-900 hidden lg:table-cell">Deadline</th>
-                  <th className="text-left p-3 sm:p-4 font-medium text-gray-900">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {filteredPositions.map((position) => (
-                  <tr key={position.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="p-3 sm:p-4">
-                      <div>
-                        <div className="font-medium text-gray-900 truncate">{position.position}</div>
-                        <div className="text-sm text-gray-500 truncate">{position.location}</div>
-                        <div className="text-xs text-blue-600 sm:hidden">{position.department}</div>
-                      </div>
-                    </td>
-                    <td className="p-3 sm:p-4 hidden sm:table-cell">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        {position.department}
-                      </span>
-                    </td>
-                    <td className="p-3 sm:p-4 text-gray-900">{position.applicants}</td>
-                    <td className="p-3 sm:p-4">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${stageColors[position.stage]}`}>
-                        {getStageDisplayName(position.stage)}
-                      </span>
-                    </td>
-                    <td className="p-3 sm:p-4 hidden md:table-cell">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${priorityColors[position.priority]}`}>
-                        {position.priority}
-                      </span>
-                    </td>
-                    <td className="p-3 sm:p-4 text-gray-900 text-sm hidden lg:table-cell">
-                      {new Date(position.deadline).toLocaleDateString()}
-                    </td>
-                    <td className="p-3 sm:p-4">
-                      <div className="flex items-center space-x-2">
-                        <button 
-                          onClick={() => {
-                            setSelectedPosition(position.id);
-                            setShowInterviewModal(true);
-                          }}
-                          className="text-blue-600 hover:text-blue-800 text-sm p-1"
-                          title="Schedule Interview"
-                        >
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-sm text-gray-600 mb-3">
+                        <div className="flex items-center space-x-1">
+                          <Users size={16} />
+                          <span>{position.department}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <MapPin size={16} />
+                          <span>{position.location}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <Clock size={16} />
+                          <span>{position.type}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
                           <Calendar size={16} />
-                        </button>
-                        <button className="text-gray-600 hover:text-gray-800 text-sm p-1" title="View">
-                          <Eye size={16} />
-                        </button>
-                        <button className="text-gray-600 hover:text-gray-800 text-sm p-1 hidden sm:inline" title="Edit">
-                          <Edit size={16} />
-                        </button>
+                          <span>Due: {new Date(position.deadline).toLocaleDateString()}</span>
+                        </div>
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {viewType === 'interviews' && (
-        <div className="space-y-6">
-          {/* Upcoming Interviews */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Upcoming Interviews</h3>
-              <button 
-                onClick={() => setShowInterviewModal(true)}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 text-sm"
-              >
-                <Plus size={16} />
-                <span>Schedule Interview</span>
-              </button>
-            </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-              {upcomingInterviews.map(interview => {
-                const position = positions.find(p => p.id === interview.positionId);
-                return (
-                  <div key={interview.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h4 className="font-medium text-gray-900">{interview.candidateName}</h4>
-                        <p className="text-sm text-gray-600">{position?.position}</p>
+                      
+                      <p className="text-gray-700 mb-3">{position.description}</p>
+                      <div className="text-sm text-gray-600">
+                        <span className="font-medium">{position.applicants} applicants</span> • 
+                        <span className="ml-1">Salary: {position.salary}</span>
                       </div>
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getInterviewStatusColor(interview.status)}`}>
-                        {interview.status}
-                      </span>
                     </div>
                     
-                    <div className="space-y-2 text-sm text-gray-600 mb-4">
-                      <div className="flex items-center space-x-2">
-                        <Calendar size={14} />
-                        <span>{new Date(interview.scheduledDate).toLocaleDateString()}</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Clock size={14} />
-                        <span>{interview.scheduledTime}</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        {interviewTypeIcons[interview.interviewType]}
-                        <span className="capitalize">{interview.interviewType}</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Users size={14} />
-                        <span>{interview.interviewers.join(', ')}</span>
-                      </div>
-                      {interview.customMeetingLink && (
-                        <div className="flex items-center space-x-2">
-                          <Link size={14} />
-                          <span className="text-blue-600 truncate">Meeting link available</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {interview.rating && (
-                      <div className="flex items-center space-x-1 mb-3">
-                        {getRatingStars(interview.rating)}
-                        <span className="text-sm text-gray-600 ml-2">{interview.rating}/5</span>
-                      </div>
-                    )}
-
-                    <div className="flex items-center space-x-2">
-                      {interview.customMeetingLink && (
-                        <button
-                          onClick={() => joinMeeting(interview.customMeetingLink!)}
-                          className="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700 transition-colors flex items-center justify-center space-x-1"
-                        >
-                          <Video size={14} />
-                          <span>Join Meeting</span>
-                        </button>
-                      )}
-                      <button className="text-gray-600 hover:text-gray-800 p-2">
-                        <Edit size={16} />
+                    <div className="flex items-center space-x-2 lg:ml-4">
+                      <button 
+                        onClick={() => openPositionModal(position)}
+                        className="text-blue-600 hover:text-blue-800 transition-colors p-2"
+                        title="Edit Position"
+                      >
+                        <Edit size={18} />
+                      </button>
+                      <button 
+                        onClick={() => deletePosition(position.id)}
+                        className="text-red-600 hover:text-red-800 transition-colors p-2"
+                        title="Delete Position"
+                      >
+                        <Trash2 size={18} />
                       </button>
                     </div>
                   </div>
-                );
-              })}
+                </div>
+              ))}
+              
+              {filteredPositions.length === 0 && (
+                <div className="text-center py-12">
+                  <Users className="mx-auto h-12 w-12 text-gray-400" />
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">No positions found</h3>
+                  <p className="mt-1 text-sm text-gray-500">Get started by creating a new position.</p>
+                </div>
+              )}
             </div>
-          </div>
+          )}
 
-          {/* Completed Interviews */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Completed Interviews</h3>
-            <div className="space-y-3">
-              {interviews.filter(i => i.status === 'completed').map(interview => {
-                const position = positions.find(p => p.id === interview.positionId);
-                return (
-                  <div key={interview.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+          {/* Candidates Tab */}
+          {activeTab === 'candidates' && (
+            <div className="space-y-4">
+              {filteredCandidates.map((candidate) => (
+                <div key={candidate.id} className="border border-gray-200 rounded-lg p-4 sm:p-6 hover:shadow-md transition-shadow">
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
                     <div className="flex items-center space-x-4">
-                      <div>
-                        <div className="font-medium text-gray-900">{interview.candidateName}</div>
-                        <div className="text-sm text-gray-600">{position?.position}</div>
-                        {interview.customMeetingLink && (
-                          <div className="text-xs text-blue-600">Custom meeting link used</div>
-                        )}
-                      </div>
-                      {interview.rating && (
-                        <div className="flex items-center space-x-1">
-                          {getRatingStars(interview.rating)}
+                      <img
+                        src={candidate.avatar}
+                        alt={candidate.name}
+                        className="w-12 h-12 rounded-full object-cover flex-shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg font-semibold text-gray-900">{candidate.name}</h3>
+                        <p className="text-sm text-gray-600">{candidate.position}</p>
+                        <div className="flex flex-wrap items-center gap-2 mt-2">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStageColor(candidate.stage)}`}>
+                            {candidate.stage.charAt(0).toUpperCase() + candidate.stage.slice(1)}
+                          </span>
+                          <span className="text-xs text-gray-500">Score: {candidate.score}/100</span>
+                          <span className="text-xs text-gray-500">Applied: {new Date(candidate.appliedDate).toLocaleDateString()}</span>
                         </div>
-                      )}
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-sm text-gray-600">{new Date(interview.scheduledDate).toLocaleDateString()}</div>
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getInterviewStatusColor(interview.status)}`}>
-                        Completed
-                      </span>
+                    
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
+                      <div className="flex items-center space-x-2">
+                        <button 
+                          onClick={() => {
+                            setSelectedCandidateDetails(candidate);
+                            setShowCandidateModal(true);
+                          }}
+                          className="text-blue-600 hover:text-blue-800 transition-colors p-2"
+                          title="View Details"
+                        >
+                          <Eye size={18} />
+                        </button>
+                        <button 
+                          onClick={() => window.open(`mailto:${candidate.email}`, '_blank')}
+                          className="text-green-600 hover:text-green-800 transition-colors p-2"
+                          title="Send Email"
+                        >
+                          <Mail size={18} />
+                        </button>
+                        <button 
+                          onClick={() => window.open(`tel:${candidate.phone}`, '_blank')}
+                          className="text-purple-600 hover:text-purple-800 transition-colors p-2"
+                          title="Call"
+                        >
+                          <Phone size={18} />
+                        </button>
+                      </div>
+                      
+                      <div className="flex items-center space-x-2">
+                        {candidate.stage !== 'hired' && candidate.stage !== 'rejected' && (
+                          <button 
+                            onClick={() => {
+                              setSelectedCandidate(candidate.id);
+                              setShowInterviewModal(true);
+                            }}
+                            className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors"
+                          >
+                            Schedule Interview
+                          </button>
+                        )}
+                        
+                        <select
+                          value={candidate.stage}
+                          onChange={(e) => updateCandidateStage(candidate.id, e.target.value as Candidate['stage'])}
+                          className="border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                          <option value="applied">Applied</option>
+                          <option value="screening">Screening</option>
+                          <option value="interview">Interview</option>
+                          <option value="offer">Offer</option>
+                          <option value="hired">Hired</option>
+                          <option value="rejected">Rejected</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Recruitment Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h4 className="text-lg font-semibold text-gray-900 mb-4">This Month</h4>
-          <div className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-gray-600">New Applications:</span>
-              <span className="font-medium">142</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Interviews Conducted:</span>
-              <span className="font-medium">{interviews.filter(i => i.status === 'completed').length}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Offers Made:</span>
-              <span className="font-medium">12</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Hires:</span>
-              <span className="font-medium">{positions.filter(p => p.stage === 'hired').length}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Rejections:</span>
-              <span className="font-medium text-red-600">{positions.filter(p => p.stage === 'rejected').length}</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h4 className="text-lg font-semibold text-gray-900 mb-4">Performance</h4>
-          <div className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Time to Hire:</span>
-              <span className="font-medium">18 days</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Offer Accept Rate:</span>
-              <span className="font-medium">75%</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Cost per Hire:</span>
-              <span className="font-medium">$2,400</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Interview Rating:</span>
-              <span className="font-medium">4.2/5</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Rejection Rate:</span>
-              <span className="font-medium text-red-600">
-                {Math.round((positions.filter(p => p.stage === 'rejected').length / positions.length) * 100)}%
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h4 className="text-lg font-semibold text-gray-900 mb-4">Upcoming</h4>
-          <div className="space-y-3">
-            {upcomingInterviews.slice(0, 3).map(interview => (
-              <div key={interview.id} className="p-3 bg-blue-50 rounded-lg">
-                <div className="font-medium text-blue-900 text-sm">{interview.candidateName}</div>
-                <div className="text-sm text-blue-700">
-                  {new Date(interview.scheduledDate).toLocaleDateString()} • {interview.scheduledTime}
                 </div>
-                <div className="flex items-center space-x-1 mt-1">
-                  {interviewTypeIcons[interview.interviewType]}
-                  <span className="text-xs text-blue-600 capitalize">{interview.interviewType}</span>
-                  {interview.customMeetingLink && (
-                    <span className="text-xs text-blue-500">• Custom link</span>
-                  )}
+              ))}
+              
+              {filteredCandidates.length === 0 && (
+                <div className="text-center py-12">
+                  <Users className="mx-auto h-12 w-12 text-gray-400" />
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">No candidates found</h3>
+                  <p className="mt-1 text-sm text-gray-500">Candidates will appear here as they apply.</p>
                 </div>
+              )}
+            </div>
+          )}
+
+          {/* Kanban Tab */}
+          {activeTab === 'kanban' && (
+            <div className="overflow-x-auto">
+              <div className="flex space-x-4 min-w-max pb-4">
+                {kanbanStages.map((stage) => {
+                  const stageCandidates = getCandidatesByStage(stage.id);
+                  return (
+                    <div key={stage.id} className={`w-80 ${stage.color} border-2 rounded-lg p-4`}>
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-semibold text-gray-900">{stage.title}</h3>
+                        <span className="bg-white px-2 py-1 rounded-full text-sm font-medium">
+                          {stageCandidates.length}
+                        </span>
+                      </div>
+                      
+                      <div className="space-y-3 max-h-96 overflow-y-auto">
+                        {stageCandidates.map((candidate) => (
+                          <div key={candidate.id} className="bg-white p-3 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer">
+                            <div className="flex items-center space-x-3 mb-2">
+                              <img
+                                src={candidate.avatar}
+                                alt={candidate.name}
+                                className="w-8 h-8 rounded-full object-cover"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-medium text-gray-900 truncate">{candidate.name}</h4>
+                                <p className="text-xs text-gray-600 truncate">{candidate.position}</p>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center justify-between text-xs text-gray-500">
+                              <span>Score: {candidate.score}/100</span>
+                              <span>{new Date(candidate.appliedDate).toLocaleDateString()}</span>
+                            </div>
+                            
+                            <div className="mt-2 flex items-center space-x-1">
+                              <button 
+                                onClick={() => {
+                                  setSelectedCandidateDetails(candidate);
+                                  setShowCandidateModal(true);
+                                }}
+                                className="text-blue-600 hover:text-blue-800 p-1"
+                                title="View Details"
+                              >
+                                <Eye size={14} />
+                              </button>
+                              <button 
+                                onClick={() => window.open(`mailto:${candidate.email}`, '_blank')}
+                                className="text-green-600 hover:text-green-800 p-1"
+                                title="Email"
+                              >
+                                <Mail size={14} />
+                              </button>
+                              {candidate.stage !== 'hired' && candidate.stage !== 'rejected' && (
+                                <button 
+                                  onClick={() => {
+                                    setSelectedCandidate(candidate.id);
+                                    setShowInterviewModal(true);
+                                  }}
+                                  className="text-purple-600 hover:text-purple-800 p-1"
+                                  title="Schedule Interview"
+                                >
+                                  <Calendar size={14} />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                        
+                        {stageCandidates.length === 0 && (
+                          <div className="text-center py-8 text-gray-500">
+                            <p className="text-sm">No candidates</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            ))}
-          </div>
+            </div>
+          )}
+
+          {/* Interviews Tab */}
+          {activeTab === 'interviews' && (
+            <div className="space-y-4">
+              {interviews.map((interview) => (
+                <div key={interview.id} className="border border-gray-200 rounded-lg p-4 sm:p-6 hover:shadow-md transition-shadow">
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
+                    <div className="flex-1">
+                      <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 mb-2">
+                        <h3 className="text-lg font-semibold text-gray-900">{interview.candidateName}</h3>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          interview.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
+                          interview.status === 'completed' ? 'bg-green-100 text-green-800' :
+                          interview.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                          'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {interview.status.charAt(0).toUpperCase() + interview.status.slice(1)}
+                        </span>
+                      </div>
+                      
+                      <p className="text-gray-600 mb-2">{interview.position}</p>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-sm text-gray-600">
+                        <div className="flex items-center space-x-1">
+                          <Calendar size={16} />
+                          <span>{new Date(interview.date).toLocaleDateString()}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <Clock size={16} />
+                          <span>{interview.time}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          {interview.type === 'video' ? <Video size={16} /> :
+                           interview.type === 'phone' ? <Phone size={16} /> :
+                           <MapPin size={16} />}
+                          <span>{interview.type.charAt(0).toUpperCase() + interview.type.slice(1)}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <Users size={16} />
+                          <span>{interview.interviewer}</span>
+                        </div>
+                      </div>
+                      
+                      {interview.notes && (
+                        <p className="text-sm text-gray-600 mt-2">{interview.notes}</p>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center space-x-2 lg:ml-4">
+                      {interview.meetingLink && (
+                        <button 
+                          onClick={() => window.open(interview.meetingLink, '_blank')}
+                          className="bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-1 text-sm"
+                        >
+                          <ExternalLink size={16} />
+                          <span>Join Meeting</span>
+                        </button>
+                      )}
+                      
+                      <button 
+                        className="text-blue-600 hover:text-blue-800 transition-colors p-2"
+                        title="Edit Interview"
+                      >
+                        <Edit size={18} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              
+              {interviews.length === 0 && (
+                <div className="text-center py-12">
+                  <Calendar className="mx-auto h-12 w-12 text-gray-400" />
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">No interviews scheduled</h3>
+                  <p className="mt-1 text-sm text-gray-500">Schedule interviews with candidates to get started.</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Add Position Modal */}
-      {showAddModal && (
+      {/* Position Modal */}
+      {showPositionModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900">Add New Position</h3>
+                <h3 className="text-xl font-bold text-gray-900">
+                  {editingPosition ? 'Edit Position' : 'Add New Position'}
+                </h3>
                 <button
-                  onClick={() => setShowAddModal(false)}
+                  onClick={() => setShowPositionModal(false)}
                   className="text-gray-400 hover:text-gray-600"
                 >
                   <X size={24} />
                 </button>
               </div>
 
-              <form onSubmit={handleAddPosition} className="space-y-4">
+              <form onSubmit={handlePositionSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Position Title *
+                      Job Title *
                     </label>
                     <input
                       type="text"
                       required
-                      value={formData.position}
-                      onChange={(e) => setFormData({...formData, position: e.target.value})}
+                      value={positionForm.title}
+                      onChange={(e) => setPositionForm({...positionForm, title: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="e.g., Senior Software Engineer"
+                      placeholder="e.g. Senior Frontend Developer"
                     />
                   </div>
 
@@ -823,8 +882,8 @@ const Recruitment: React.FC = () => {
                     </label>
                     <select
                       required
-                      value={formData.department}
-                      onChange={(e) => setFormData({...formData, department: e.target.value})}
+                      value={positionForm.department}
+                      onChange={(e) => setPositionForm({...positionForm, department: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                       <option value="">Select Department</option>
@@ -841,24 +900,10 @@ const Recruitment: React.FC = () => {
                     <input
                       type="text"
                       required
-                      value={formData.location}
-                      onChange={(e) => setFormData({...formData, location: e.target.value})}
+                      value={positionForm.location}
+                      onChange={(e) => setPositionForm({...positionForm, location: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="e.g., New York, NY"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Salary Range *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.salary}
-                      onChange={(e) => setFormData({...formData, salary: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="e.g., $60,000 - $80,000"
+                      placeholder="e.g. San Francisco, CA or Remote"
                     />
                   </div>
 
@@ -868,77 +913,91 @@ const Recruitment: React.FC = () => {
                     </label>
                     <select
                       required
-                      value={formData.type}
-                      onChange={(e) => setFormData({...formData, type: e.target.value})}
+                      value={positionForm.type}
+                      onChange={(e) => setPositionForm({...positionForm, type: e.target.value as any})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                       <option value="full-time">Full-time</option>
                       <option value="part-time">Part-time</option>
                       <option value="contract">Contract</option>
+                      <option value="internship">Internship</option>
                     </select>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Priority *
+                      Salary Range *
                     </label>
-                    <select
+                    <input
+                      type="text"
                       required
-                      value={formData.priority}
-                      onChange={(e) => setFormData({...formData, priority: e.target.value})}
+                      value={positionForm.salary}
+                      onChange={(e) => setPositionForm({...positionForm, salary: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value="low">Low</option>
-                      <option value="medium">Medium</option>
-                      <option value="high">High</option>
-                    </select>
+                      placeholder="e.g. $80,000 - $120,000"
+                    />
                   </div>
 
-                  <div className="sm:col-span-2">
+                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Application Deadline *
                     </label>
                     <input
                       type="date"
                       required
-                      value={formData.deadline}
-                      onChange={(e) => setFormData({...formData, deadline: e.target.value})}
+                      value={positionForm.deadline}
+                      onChange={(e) => setPositionForm({...positionForm, deadline: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
+                </div>
 
-                  <div className="sm:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Job Description *
-                    </label>
-                    <textarea
-                      required
-                      rows={4}
-                      value={formData.description}
-                      onChange={(e) => setFormData({...formData, description: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Describe the role, responsibilities, and what you're looking for..."
-                    />
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Priority Level
+                  </label>
+                  <select
+                    value={positionForm.priority}
+                    onChange={(e) => setPositionForm({...positionForm, priority: e.target.value as any})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                  </select>
+                </div>
 
-                  <div className="sm:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Requirements (one per line)
-                    </label>
-                    <textarea
-                      rows={4}
-                      value={formData.requirements}
-                      onChange={(e) => setFormData({...formData, requirements: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Bachelor's degree in Computer Science&#10;3+ years of experience&#10;Strong communication skills"
-                    />
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Job Description *
+                  </label>
+                  <textarea
+                    required
+                    rows={4}
+                    value={positionForm.description}
+                    onChange={(e) => setPositionForm({...positionForm, description: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Describe the role, responsibilities, and what you're looking for..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Requirements (one per line)
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={positionForm.requirements}
+                    onChange={(e) => setPositionForm({...positionForm, requirements: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="5+ years of experience&#10;Bachelor's degree in Computer Science&#10;Proficiency in React and TypeScript"
+                  />
                 </div>
 
                 <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-6">
                   <button
                     type="button"
-                    onClick={() => setShowAddModal(false)}
+                    onClick={() => setShowPositionModal(false)}
                     className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
                   >
                     Cancel
@@ -948,7 +1007,7 @@ const Recruitment: React.FC = () => {
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
                   >
                     <Save size={16} />
-                    <span>Create Position</span>
+                    <span>{editingPosition ? 'Update Position' : 'Create Position'}</span>
                   </button>
                 </div>
               </form>
@@ -957,10 +1016,10 @@ const Recruitment: React.FC = () => {
         </div>
       )}
 
-      {/* Schedule Interview Modal */}
-      {showInterviewModal && (
+      {/* Interview Modal */}
+      {showInterviewModal && selectedCandidate && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-gray-900">Schedule Interview</h3>
@@ -976,59 +1035,13 @@ const Recruitment: React.FC = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Candidate Name *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={interviewForm.candidateName}
-                      onChange={(e) => setInterviewForm({...interviewForm, candidateName: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Enter candidate name"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Candidate Email *
-                    </label>
-                    <input
-                      type="email"
-                      required
-                      value={interviewForm.candidateEmail}
-                      onChange={(e) => setInterviewForm({...interviewForm, candidateEmail: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="candidate@email.com"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Interview Type *
-                    </label>
-                    <select
-                      required
-                      value={interviewForm.interviewType}
-                      onChange={(e) => setInterviewForm({...interviewForm, interviewType: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value="zoom">Zoom Meeting</option>
-                      <option value="meet">Google Meet</option>
-                      <option value="teams">Microsoft Teams</option>
-                      <option value="in-person">In-Person</option>
-                      <option value="phone">Phone Call</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       Date *
                     </label>
                     <input
                       type="date"
                       required
-                      value={interviewForm.scheduledDate}
-                      onChange={(e) => setInterviewForm({...interviewForm, scheduledDate: e.target.value})}
+                      value={interviewForm.date}
+                      onChange={(e) => setInterviewForm({...interviewForm, date: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
@@ -1040,81 +1053,90 @@ const Recruitment: React.FC = () => {
                     <input
                       type="time"
                       required
-                      value={interviewForm.scheduledTime}
-                      onChange={(e) => setInterviewForm({...interviewForm, scheduledTime: e.target.value})}
+                      value={interviewForm.time}
+                      onChange={(e) => setInterviewForm({...interviewForm, time: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Interviewers *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={interviewForm.interviewers}
-                      onChange={(e) => setInterviewForm({...interviewForm, interviewers: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="John Doe, Jane Smith"
-                    />
-                  </div>
-
-                  {/* Custom Meeting Link Field */}
-                  {['zoom', 'meet', 'teams'].includes(interviewForm.interviewType) && (
-                    <div className="sm:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Meeting Link *
-                      </label>
-                      <div className="relative">
-                        <Link className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
-                        <input
-                          type="url"
-                          required
-                          value={interviewForm.customMeetingLink}
-                          onChange={(e) => setInterviewForm({...interviewForm, customMeetingLink: e.target.value})}
-                          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder={
-                            interviewForm.interviewType === 'zoom' ? 'https://zoom.us/j/123456789?pwd=...' :
-                            interviewForm.interviewType === 'meet' ? 'https://meet.google.com/abc-defg-hij' :
-                            'https://teams.microsoft.com/l/meetup-join/...'
-                          }
-                        />
-                      </div>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Enter the complete meeting link including password if required
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="sm:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Notes
-                    </label>
-                    <textarea
-                      rows={3}
-                      value={interviewForm.notes}
-                      onChange={(e) => setInterviewForm({...interviewForm, notes: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Additional notes about the interview..."
                     />
                   </div>
                 </div>
 
-                {['zoom', 'meet', 'teams'].includes(interviewForm.interviewType) && (
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <Video className="h-5 w-5 text-blue-600" />
-                      <span className="font-medium text-blue-900 capitalize">
-                        {interviewForm.interviewType === 'meet' ? 'Google Meet' : 
-                         interviewForm.interviewType === 'teams' ? 'Microsoft Teams' : 'Zoom'} Meeting
-                      </span>
-                    </div>
-                    <p className="text-sm text-blue-700">
-                      Please provide the complete meeting link. The candidate will receive this link to join the interview.
-                    </p>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Interview Type *
+                  </label>
+                  <select
+                    required
+                    value={interviewForm.type}
+                    onChange={(e) => setInterviewForm({...interviewForm, type: e.target.value as any})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="video">Video Call</option>
+                    <option value="phone">Phone Call</option>
+                    <option value="in-person">In-Person</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Interviewer *
+                  </label>
+                  <select
+                    required
+                    value={interviewForm.interviewer}
+                    onChange={(e) => setInterviewForm({...interviewForm, interviewer: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Select Interviewer</option>
+                    {interviewers.map(interviewer => (
+                      <option key={interviewer} value={interviewer}>{interviewer}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {interviewForm.type === 'video' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Meeting Link *
+                    </label>
+                    <input
+                      type="url"
+                      required={interviewForm.type === 'video'}
+                      value={interviewForm.meetingLink}
+                      onChange={(e) => setInterviewForm({...interviewForm, meetingLink: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="https://zoom.us/j/123456789 or https://meet.google.com/abc-defg-hij"
+                    />
                   </div>
                 )}
+
+                {interviewForm.type === 'in-person' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Location *
+                    </label>
+                    <input
+                      type="text"
+                      required={interviewForm.type === 'in-person'}
+                      value={interviewForm.location}
+                      onChange={(e) => setInterviewForm({...interviewForm, location: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Conference Room A, 123 Main St, etc."
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Notes
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={interviewForm.notes}
+                    onChange={(e) => setInterviewForm({...interviewForm, notes: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Interview focus, preparation notes, etc."
+                  />
+                </div>
 
                 <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-6">
                   <button
@@ -1133,6 +1155,105 @@ const Recruitment: React.FC = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Candidate Details Modal */}
+      {showCandidateModal && selectedCandidateDetails && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-4">
+                  <img
+                    src={selectedCandidateDetails.avatar}
+                    alt={selectedCandidateDetails.name}
+                    className="w-16 h-16 rounded-full object-cover"
+                  />
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900">{selectedCandidateDetails.name}</h3>
+                    <p className="text-gray-600">{selectedCandidateDetails.position}</p>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStageColor(selectedCandidateDetails.stage)}`}>
+                      {selectedCandidateDetails.stage.charAt(0).toUpperCase() + selectedCandidateDetails.stage.slice(1)}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowCandidateModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Contact Information</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center space-x-2">
+                      <Mail size={16} className="text-gray-400" />
+                      <a href={`mailto:${selectedCandidateDetails.email}`} className="text-blue-600 hover:text-blue-800">
+                        {selectedCandidateDetails.email}
+                      </a>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Phone size={16} className="text-gray-400" />
+                      <a href={`tel:${selectedCandidateDetails.phone}`} className="text-blue-600 hover:text-blue-800">
+                        {selectedCandidateDetails.phone}
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Application Details</h4>
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <span className="text-gray-600">Applied:</span>
+                      <span className="ml-2">{new Date(selectedCandidateDetails.appliedDate).toLocaleDateString()}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Score:</span>
+                      <span className="ml-2 font-medium">{selectedCandidateDetails.score}/100</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Resume:</span>
+                      <button className="ml-2 text-blue-600 hover:text-blue-800">
+                        {selectedCandidateDetails.resume}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <h4 className="font-semibold text-gray-900 mb-2">Notes</h4>
+                <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">
+                  {selectedCandidateDetails.notes}
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3">
+                <button
+                  onClick={() => setShowCandidateModal(false)}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Close
+                </button>
+                <button 
+                  onClick={() => {
+                    setSelectedCandidate(selectedCandidateDetails.id);
+                    setShowCandidateModal(false);
+                    setShowInterviewModal(true);
+                  }}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                >
+                  <Calendar size={16} />
+                  <span>Schedule Interview</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>

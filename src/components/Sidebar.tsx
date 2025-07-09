@@ -50,7 +50,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeSection, setActiveSection, isOp
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-slate-700">
             <div>
-              <h1 className="text-xl lg:text-2xl font-bold text-blue-400">HR Dashboard</h1>
+              <h1 className="text-lg lg:text-xl xl:text-2xl font-bold text-blue-400">HR Dashboard</h1>
               <p className="text-slate-400 text-xs lg:text-sm mt-1">Management System</p>
             </div>
             <button
@@ -78,8 +78,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeSection, setActiveSection, isOp
                       : 'text-slate-300 hover:bg-slate-800 hover:text-white'
                   }`}
                 >
-                  <Icon size={20} />
-                  <span className="font-medium">{item.label}</span>
+                  <Icon size={18} className="flex-shrink-0" />
+                  <span className="font-medium text-sm lg:text-base">{item.label}</span>
                 </button>
               );
             })}

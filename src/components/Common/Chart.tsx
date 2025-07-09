@@ -17,6 +17,14 @@ const Chart: React.FC<ChartProps> = ({ data, type, height = 300, color = '#3B82F
   }
 
   const maxValue = Math.max(...data.map(item => item.value));
+  if (maxValue === 0) {
+    return (
+      <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg">
+        <p className="text-gray-500">No data to display</p>
+      </div>
+    );
+  }
+  
   const padding = 50;
   const chartWidth = Math.max(400, data.length * 60); // Dynamic width based on data points
   const chartHeight = height - padding * 2;

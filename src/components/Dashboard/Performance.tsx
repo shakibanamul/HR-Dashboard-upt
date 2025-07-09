@@ -16,12 +16,16 @@ const Performance: React.FC = () => {
   const chartData = filteredPerformanceData.reduce((acc, item) => {
     const existing = acc.find(x => x.label === item.month);
     if (existing) {
-      existing.value = (existing.value + item.score) / 2;
+      existing.value = Math.round((existing.value + item.score) / 2);
     } else {
       acc.push({ label: item.month, value: item.score });
     }
     return acc;
   }, [] as Array<{ label: string; value: number }>);
+
+  // Sort chart data by month order
+  const monthOrder = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  chartData.sort((a, b) => monthOrder.indexOf(a.label) - monthOrder.indexOf(b.label));
 
   const topPerformers = mockEmployees
     .sort((a, b) => b.performanceRating - a.performanceRating)
