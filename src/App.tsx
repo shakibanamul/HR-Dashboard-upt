@@ -17,7 +17,7 @@ function App() {
   const renderContent = () => {
     switch (activeSection) {
       case 'overview':
-        return <Overview />;
+        return <Overview setActiveSection={setActiveSection} />;
       case 'employees':
         return <Employees />;
       case 'performance':
