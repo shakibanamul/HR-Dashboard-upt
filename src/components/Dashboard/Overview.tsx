@@ -1,7 +1,7 @@
 import React from 'react';
 import MetricCard from '../Common/MetricCard';
 import Chart from '../Common/Chart';
-import { Users, TrendingUp, Calendar, DollarSign, UserCheck, AlertTriangle } from 'lucide-react';
+import { Users, TrendingUp, Calendar, DollarSign, UserCheck, AlertTriangle, Clock, Award, Target, Activity, ChevronRight, Bell, FileText, BarChart3 } from 'lucide-react';
 import { mockEmployees, mockAttendanceData, mockRecruitmentData } from '../../data/mockData';
 
 const Overview: React.FC = () => {
@@ -12,6 +12,15 @@ const Overview: React.FC = () => {
   const avgAttendance = Math.round(mockEmployees.reduce((sum, emp) => sum + emp.attendanceRate, 0) / mockEmployees.length);
   const openPositions = mockRecruitmentData.filter(pos => pos.stage !== 'hired').length;
   const avgPerformance = mockEmployees.reduce((sum, emp) => sum + emp.performanceRating, 0) / mockEmployees.length;
+
+  // Calculate additional metrics
+  const recentHires = mockEmployees.filter(emp => 
+    new Date(emp.joinDate) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+  ).length;
+  
+  const highPerformers = mockEmployees.filter(emp => emp.performanceRating >= 4.5).length;
+  const lowAttendance = mockEmployees.filter(emp => emp.attendanceRate < 90).length;
+  const upcomingReviews = mockEmployees.filter(emp => emp.performanceRating < 4.0).length;
 
   // Dynamic attendance chart data from last 7 days
   const attendanceChartData = mockAttendanceData.slice(-7).map(item => ({
@@ -67,21 +76,82 @@ const Overview: React.FC = () => {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0">
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Dashboard Overview</h2>
-        <div className="text-xs sm:text-sm text-gray-500">
-          Last updated: {new Date().toLocaleDateString('en-US', { 
-            year: 'numeric', 
-            month: 'short', 
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-          })}
+      {/* Header with Welcome Message */}
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-6 text-white">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-4 sm:space-y-0">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold">Welcome back!</h1>
+            <p className="text-blue-100 mt-1">Here's what's happening with your team today</p>
+          </div>
+          <div className="flex items-center space-x-4">
+            <div className="text-right">
+              <div className="text-sm text-blue-100">Today</div>
+              <div className="font-semibold">{new Date().toLocaleDateString('en-US', { 
+                weekday: 'long',
+                month: 'short', 
+                day: 'numeric'
+              })}</div>
+            </div>
+            <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+              <Activity className="h-6 w-6" />
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Key Metrics - Fully Responsive Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4 lg:gap-6">
+      {/* Quick Actions */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <button className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all group">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors">
+              <Users className="h-5 w-5 text-blue-600" />
+            </div>
+            <div className="text-left">
+              <div className="text-sm font-medium text-gray-900">Add Employee</div>
+              <div className="text-xs text-gray-500">Quick hire</div>
+            </div>
+          </div>
+        </button>
+        
+        <button className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all group">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-green-50 rounded-lg group-hover:bg-green-100 transition-colors">
+              <FileText className="h-5 w-5 text-green-600" />
+            </div>
+            <div className="text-left">
+              <div className="text-sm font-medium text-gray-900">Generate Report</div>
+              <div className="text-xs text-gray-500">Export data</div>
+            </div>
+          </div>
+        </button>
+        
+        <button className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all group">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-purple-50 rounded-lg group-hover:bg-purple-100 transition-colors">
+              <Award className="h-5 w-5 text-purple-600" />
+            </div>
+            <div className="text-left">
+              <div className="text-sm font-medium text-gray-900">Performance</div>
+              <div className="text-xs text-gray-500">Reviews</div>
+            </div>
+          </div>
+        </button>
+        
+        <button className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all group">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-yellow-50 rounded-lg group-hover:bg-yellow-100 transition-colors">
+              <BarChart3 className="h-5 w-5 text-yellow-600" />
+            </div>
+            <div className="text-left">
+              <div className="text-sm font-medium text-gray-900">Analytics</div>
+              <div className="text-xs text-gray-500">View trends</div>
+            </div>
+          </div>
+        </button>
+      </div>
+
+      {/* Key Metrics - Enhanced Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
         <MetricCard
           title="Total Employees"
           value={totalEmployees}
@@ -96,28 +166,45 @@ const Overview: React.FC = () => {
           trend={calculateTrend(avgSalary, prevAvgSalary)}
         />
         <MetricCard
-          title="Attendance Rate"
+          title="Avg Attendance"
           value={`${avgAttendance}%`}
           icon={Calendar}
           trend={calculateTrend(avgAttendance, prevAvgAttendance)}
-        />
-        <MetricCard
-          title="Open Positions"
-          value={openPositions}
-          icon={UserCheck}
-          subtitle="Across all departments"
         />
         <MetricCard
           title="Avg Performance"
           value={avgPerformance.toFixed(1)}
           icon={TrendingUp}
           trend={calculateTrend(avgPerformance, prevAvgPerformance)}
+          subtitle="Out of 5.0"
+        />
+      </div>
+
+      {/* Secondary Metrics */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <MetricCard
+          title="Recent Hires"
+          value={recentHires}
+          icon={UserCheck}
+          subtitle="This month"
         />
         <MetricCard
-          title="Pending Reviews"
-          value={mockEmployees.filter(emp => emp.performanceRating < 4.0).length}
+          title="Open Positions"
+          value={openPositions}
+          icon={Target}
+          subtitle="Active postings"
+        />
+        <MetricCard
+          title="High Performers"
+          value={highPerformers}
+          icon={Award}
+          subtitle="4.5+ rating"
+        />
+        <MetricCard
+          title="Needs Attention"
+          value={lowAttendance}
           icon={AlertTriangle}
-          subtitle="Needs attention"
+          subtitle="<90% attendance"
         />
       </div>
 
@@ -208,9 +295,101 @@ const Overview: React.FC = () => {
         </div>
       </div>
 
+      {/* Alerts and Notifications */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 flex items-center">
+              <Bell className="h-5 w-5 mr-2 text-orange-500" />
+              Priority Alerts
+            </h3>
+            <button className="text-blue-600 hover:text-blue-800 text-sm">View All</button>
+          </div>
+          <div className="space-y-3">
+            {upcomingReviews > 0 && (
+              <div className="flex items-start space-x-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-900">
+                    {upcomingReviews} employees need performance reviews
+                  </p>
+                  <p className="text-xs text-gray-600 mt-1">Schedule reviews to maintain performance standards</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-gray-400" />
+              </div>
+            )}
+            
+            {lowAttendance > 0 && (
+              <div className="flex items-start space-x-3 p-3 bg-red-50 rounded-lg border border-red-200">
+                <Clock className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-900">
+                    {lowAttendance} employees have low attendance
+                  </p>
+                  <p className="text-xs text-gray-600 mt-1">Consider reaching out for support or intervention</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-gray-400" />
+              </div>
+            )}
+            
+            <div className="flex items-start space-x-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <FileText className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-900">
+                  Monthly payroll processing due in 3 days
+                </p>
+                <p className="text-xs text-gray-600 mt-1">Ensure all timesheets are submitted and approved</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-gray-400" />
+            </div>
+          </div>
+        </div>
+
+        {/* Team Highlights */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 flex items-center">
+              <Award className="h-5 w-5 mr-2 text-green-500" />
+              Team Highlights
+            </h3>
+            <button className="text-blue-600 hover:text-blue-800 text-sm">View More</button>
+          </div>
+          <div className="space-y-4">
+            {mockEmployees
+              .sort((a, b) => b.performanceRating - a.performanceRating)
+              .slice(0, 3)
+              .map((employee, index) => (
+                <div key={employee.id} className="flex items-center space-x-3 p-3 bg-green-50 rounded-lg">
+                  <img
+                    src={employee.avatar}
+                    alt={employee.name}
+                    className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-gray-900 truncate">{employee.name}</div>
+                    <div className="text-sm text-gray-600 truncate">{employee.department}</div>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <div className="text-sm font-bold text-green-600">{employee.performanceRating.toFixed(1)}</div>
+                    <div className="text-xs text-gray-500">
+                      {index === 0 ? '🏆 Top' : index === 1 ? '🥈 2nd' : '🥉 3rd'}
+                    </div>
+                  </div>
+                </div>
+              ))}
+          </div>
+        </div>
+      </div>
+
       {/* Department Performance Details */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-        <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Department Performance Overview</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900">Department Performance Overview</h3>
+          <button className="text-blue-600 hover:text-blue-800 text-sm flex items-center space-x-1">
+            <span>View Details</span>
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {Object.entries(departmentData).map(([dept, count]) => {
             const deptEmployees = mockEmployees.filter(emp => emp.department === dept);
@@ -219,10 +398,10 @@ const Overview: React.FC = () => {
             const avgDeptAttendance = Math.round(deptEmployees.reduce((sum, emp) => sum + emp.attendanceRate, 0) / count);
             
             return (
-              <div key={dept} className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
+              <div key={dept} className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-all cursor-pointer hover:border-blue-300">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="font-medium text-gray-900 truncate">{dept}</h4>
-                  <span className="text-sm text-gray-500">{count} emp</span>
+                  <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">{count}</span>
                 </div>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
@@ -239,7 +418,7 @@ const Overview: React.FC = () => {
                   </div>
                   <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
                     <div 
-                      className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                      className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-500"
                       style={{ width: `${(avgDeptPerformance / 5) * 100}%` }}
                     ></div>
                   </div>
@@ -252,13 +431,21 @@ const Overview: React.FC = () => {
 
       {/* Recent Activity - Enhanced with Real Data */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-        <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Recent Activity & Insights</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900">Recent Activity & Insights</h3>
+          <div className="text-xs text-gray-500">
+            Last updated: {new Date().toLocaleTimeString('en-US', { 
+              hour: '2-digit',
+              minute: '2-digit'
+            })}
+          </div>
+        </div>
         <div className="space-y-3 sm:space-y-4">
-          <div className="flex items-start space-x-3 p-3 bg-blue-50 rounded-lg">
+          <div className="flex items-start space-x-3 p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer">
             <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900">
-                {mockEmployees.filter(emp => new Date(emp.joinDate) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)).length} new employees joined this month
+                {recentHires} new employees joined this month
               </p>
               <p className="text-xs text-gray-500">
                 Latest: {mockEmployees
@@ -266,32 +453,32 @@ const Overview: React.FC = () => {
                   .sort((a, b) => new Date(b.joinDate).getTime() - new Date(a.joinDate).getTime())[0]?.name || 'None this month'}
               </p>
             </div>
-            <div className="text-xs text-gray-400 whitespace-nowrap">Today</div>
+            <ChevronRight className="h-4 w-4 text-gray-400 mt-1 flex-shrink-0" />
           </div>
           
-          <div className="flex items-start space-x-3 p-3 bg-green-50 rounded-lg">
+          <div className="flex items-start space-x-3 p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors cursor-pointer">
             <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900">
-                {mockEmployees.filter(emp => emp.performanceRating >= 4.5).length} employees with excellent performance ratings
+                {highPerformers} employees with excellent performance ratings
               </p>
               <p className="text-xs text-gray-500">Top performer: {mockEmployees.sort((a, b) => b.performanceRating - a.performanceRating)[0]?.name}</p>
             </div>
-            <div className="text-xs text-gray-400 whitespace-nowrap">This week</div>
+            <ChevronRight className="h-4 w-4 text-gray-400 mt-1 flex-shrink-0" />
           </div>
           
-          <div className="flex items-start space-x-3 p-3 bg-yellow-50 rounded-lg">
+          <div className="flex items-start space-x-3 p-3 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors cursor-pointer">
             <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 flex-shrink-0"></div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900">
-                {mockEmployees.filter(emp => emp.attendanceRate < 90).length} employees need attendance improvement
+                {lowAttendance} employees need attendance improvement
               </p>
               <p className="text-xs text-gray-500">Average attendance: {avgAttendance}%</p>
             </div>
-            <div className="text-xs text-gray-400 whitespace-nowrap">This month</div>
+            <ChevronRight className="h-4 w-4 text-gray-400 mt-1 flex-shrink-0" />
           </div>
 
-          <div className="flex items-start space-x-3 p-3 bg-purple-50 rounded-lg">
+          <div className="flex items-start space-x-3 p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors cursor-pointer">
             <div className="w-2 h-2 bg-purple-500 rounded-full mt-2 flex-shrink-0"></div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900">
@@ -299,7 +486,7 @@ const Overview: React.FC = () => {
               </p>
               <p className="text-xs text-gray-500">Priority hiring in progress</p>
             </div>
-            <div className="text-xs text-gray-400 whitespace-nowrap">Ongoing</div>
+            <ChevronRight className="h-4 w-4 text-gray-400 mt-1 flex-shrink-0" />
           </div>
         </div>
       </div>
